@@ -1,40 +1,97 @@
 const botao = document.getElementById('botao-tema');
 const body = document.body;
+const themeIcon = botao.querySelector('i');
 
-// Persistência do tema
-const temasalvo = localStorage.getItem('tema');
-temaEscuro(temasalvo === 'escuro');
+const savedTheme = localStorage.getItem('tema');
+aplicarTema(savedTheme === 'escuro');
 
-// Função para alternar entre tema claro e escuro
-function temaEscuro(tipo) {
-  if (tipo == true) {
-    body.classList.add('escuro');
-    botao.innerHTML = '<i class="fa-solid fa-sun"></i>';
-  } else {
-    body.classList.remove('escuro');
-    botao.innerHTML = '<i class="fa-solid fa-moon"></i>';
-  }
+function aplicarTema(isEscuro) {
+  body.classList.toggle('escuro', isEscuro);
+  themeIcon.className = isEscuro ? 'bi bi-sun-fill' : 'bi bi-moon-stars';
 }
 
 botao.addEventListener('click', () => {
-  const isescuro = body.classList.toggle('escuro');
-  temaEscuro(isescuro);
-  localStorage.setItem('tema', isescuro ? 'escuro' : 'claro');
+  const isEscuro = body.classList.toggle('escuro');
+  aplicarTema(isEscuro);
+  localStorage.setItem('tema', isEscuro ? 'escuro' : 'claro');
 });
 
-// Scroll suave para links de navegação
-const navLinks = document.querySelectorAll('#menu ul a.link');
-navLinks.forEach(link => {
-  link.addEventListener('click', function(e) {
-    e.preventDefault();
-    const target = document.querySelector(this.getAttribute('href'));
-    if (target) {
-      const headerHeight = document.querySelector('header').offsetHeight;
-      const targetPosition = target.offsetTop - headerHeight - 20;
-      window.scrollTo({
-        top: targetPosition,
-        behavior: 'smooth'
-      });
+const navLinks = document.querySelectorAll('#menu .link');
+navLinks.forEach((link) => {
+  link.addEventListener('click', (event) => {
+    const targetId = link.getAttribute('href');
+    if (!targetId || !targetId.startsWith('#')) {
+      return;
+    }
+
+    const targetElement = document.querySelector(targetId);
+    if (!targetElement) {
+      return;
+    }
+
+    event.preventDefault();
+    const headerHeight = document.querySelector('.site-header').offsetHeight;
+    const targetPosition = targetElement.offsetTop - headerHeight - 16;
+
+    window.scrollTo({
+      top: targetPosition,
+      behavior: 'smooth'
+    });
+  });
+});
+
+const phrases = ['Data Analyst', 'Power BI Developer', 'Business Intelligence', 'SQL Analyst'];
+const typingLine = document.getElementById('typing-line');
+let phraseIndex = 0;
+let charIndex = 0;
+let deleting = false;
+
+function digitar() {
+  const currentPhrase = phrases[phraseIndex];
+
+  if (!deleting) {
+    typingLine.textContent = currentPhrase.slice(0, charIndex + 1);
+    charIndex += 1;
+
+    if (charIndex === currentPhrase.length) {
+      deleting = true;
+      setTimeout(digitar, 1400);
+      return;
+    }
+  } else {
+    typingLine.textContent = currentPhrase.slice(0, charIndex - 1);
+    charIndex -= 1;
+
+    if (charIndex === 0) {
+      deleting = false;
+      phraseIndex = (phraseIndex + 1) % phrases.length;
+    }
+  }
+
+  setTimeout(digitar, deleting ? 60 : 100);
+}
+
+digitar();
+
+if (window.AOS) {
+  AOS.init({
+    duration: 700,
+    once: true,
+    offset: 70
+  });
+}
+
+const revealObserver = new IntersectionObserver((entries, observer) => {
+  entries.forEach((entry) => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('is-visible');
+      observer.unobserve(entry.target);
     }
   });
+}, {
+  threshold: 0.16
+});
+
+document.querySelectorAll('.reveal').forEach((element) => {
+  revealObserver.observe(element);
 });
